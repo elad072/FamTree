@@ -3,14 +3,23 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowRight, Calendar, MapPin, Phone, Mail, Heart, User, Users, Clock, Home, ChevronLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function MemberPage({ params }: { params: { id: string } }) {
-    const supabase = await createClient()
+// ב-Next.js 15, params הוא Promise ויש להגדיר אותו כך:
+export default async function MemberPage({
+    params
+}: {
+    params: Promise<{ id: string }>
+}) {
+    // 1. חילוץ ה-ID מתוך ה-Promise
     const { id } = await params
 
+    // 2. יצירת קליינט סופבייס (שרת)
+    const supabase = await createClient()
+
+    // 3. בדיקת אימות משתמש
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    // Fetch member data
+    // 4. שליפת נתוני בן המשפחה
     const { data: member } = await supabase
         .from('family_members')
         .select('*')
@@ -19,13 +28,13 @@ export default async function MemberPage({ params }: { params: { id: string } })
 
     if (!member) notFound()
 
-    // Fetch children (where parent matches this ID)
+    // 5. שליפת ילדים (כאשר האבא או האמא הם ה-ID הנוכחי)
     const { data: children } = await supabase
         .from('family_members')
         .select('id, name, nickname, birth_year')
         .or(`father_id.eq.${member.id},mother_id.eq.${member.id}`)
 
-    // Fetch primary relatives
+    // 6. שליפת קרובים ישירים (אבא, אמא, בן/בת זוג)
     const relatedIds = [member.father_id, member.mother_id, member.spouse_id].filter(Boolean) as string[]
     const { data: relatives } = await supabase
         .from('family_members')
