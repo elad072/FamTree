@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Warm Romantic Palette */
+  --background: #fdfaf6;
+  /* Ivory / Cream */
+  --foreground: #2d241e;
+  /* Deep Brown */
+  --accent: #d4af37;
+  /* Soft Gold */
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.2);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(212, 175, 55, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(183, 138, 123, 0.05) 0px, transparent 50%);
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl;
+  }
+
+  .glass-card {
+    background: rgba(255, 252, 248, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 10px 40px -10px rgba(45, 36, 30, 0.08);
+  }
+
+  .romantic-shadow {
+    box-shadow: 0 20px 50px -12px rgba(183, 138, 123, 0.15);
+  }
+
+  .text-sepia {
+    color: #5d4037;
+  }
+}
+
+/* Custom Scrollbar - Warm Theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdfaf6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e5d3c0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-stone-800 via-stone-600 to-amber-700;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #fff9f2 0%, #f3e5d8 100%);
+}
+
+[dir="rtl"] .ltr {
+  direction: ltr;
+}

@@ -1,0 +1,8 @@
+﻿node_modules/
+.next/
+out/
+build/
+.turbo/
+.cache/
+.env/
+.vercel
