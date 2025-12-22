@@ -38,7 +38,7 @@ export default async function MemberPage({
     return (
         <div className="min-h-screen bg-[#FDFCFB] text-stone-800 pb-20" dir="rtl">
 
-            {/* --- HEADER / NAVIGATION --- */}
+            {/* --- HEADER --- */}
             <div className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
                 <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors font-bold text-sm">
@@ -52,9 +52,8 @@ export default async function MemberPage({
             <main className="max-w-6xl mx-auto px-4 pt-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                    {/* --- COLUMN 1: PROFILE INFO (SIDEBAR ON DESKTOP) --- */}
+                    {/* --- COLUMN 1: PROFILE INFO --- */}
                     <div className="lg:col-span-4 space-y-6">
-                        {/* Profile Image & Name Card */}
                         <div className="bg-white rounded-[2.5rem] shadow-sm border border-stone-100 overflow-hidden">
                             <div className="relative aspect-[4/5] bg-stone-100">
                                 {member.image_url ? (
@@ -128,10 +127,10 @@ export default async function MemberPage({
                         </div>
                     </div>
 
-                    {/* --- COLUMN 2: STORY & DETAILS --- */}
+                    {/* --- COLUMN 2: STORY, GALLERY & CHILDREN --- */}
                     <div className="lg:col-span-8 space-y-8">
 
-                        {/* Life Story Section */}
+                        {/* Life Story */}
                         <section className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-stone-100">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-700">
@@ -157,7 +156,31 @@ export default async function MemberPage({
                             )}
                         </section>
 
-                        {/* Next Generation (Children) */}
+                        {/* --- GALLERY SECTION (אלבום משפחתי) --- */}
+                        {member.story_images && Array.isArray(member.story_images) && member.story_images.length > 0 && (
+                            <section className="space-y-6">
+                                <div className="flex items-center gap-4 px-4">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-stone-400 border border-stone-200 shadow-sm">
+                                        <ImageIcon className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">אלבום משפחתי</h2>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                                    {member.story_images.map((img: any, idx: number) => (
+                                        <div key={idx} className="group relative aspect-square rounded-[2rem] overflow-hidden border-4 border-white shadow-md bg-stone-50">
+                                            <img
+                                                src={typeof img === 'string' ? img : img.url}
+                                                alt="Family Archive"
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Next Generation */}
                         {children && children.length > 0 && (
                             <section className="space-y-6">
                                 <div className="flex items-center gap-4 px-4">
@@ -185,7 +208,7 @@ export default async function MemberPage({
                             </section>
                         )}
 
-                        {/* Technical Metadata (Footer info) */}
+                        {/* Technical Metadata */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="bg-stone-100/50 p-6 rounded-2xl flex items-center gap-4">
                                 <Clock className="w-5 h-5 text-stone-300" />
@@ -203,7 +226,6 @@ export default async function MemberPage({
                             </div>
                         </div>
                     </div>
-
                 </div>
             </main>
         </div>
