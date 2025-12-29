@@ -1,233 +1,291 @@
 import { createClient } from '@/lib/supabase-server'
-import { notFound, redirect } from 'next/navigation'
-import { ArrowRight, MapPin, Phone, Mail, Heart, User, Users, Clock, Home, ChevronLeft, Image as ImageIcon } from 'lucide-react'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import {
+    ChevronRight,
+    Home,
+    MapPin,
+    Calendar,
+    User as UserIcon,
+    Heart,
+    BookOpen,
+    Camera,
+    Users as UsersIcon,
+    Phone,
+    Mail
+} from 'lucide-react'
 
-export default async function MemberPage({
-    params
+export default async function MemberProfilePage({
+    params,
 }: {
     params: Promise<{ id: string }>
 }) {
     const { id } = await params
     const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
-
+    // Fetch the member
     const { data: member } = await supabase
         .from('family_members')
         .select('*')
         .eq('id', id)
         .single()
 
-    if (!member) notFound()
+    if (!member) {
+        notFound()
+    }
 
+    // Fetch relatives
+    // Parents
+    const { data: parents } = await supabase
+        .from('family_members')
+        .select('id, name, image_url')
+        .in('id', [member.father_id, member.mother_id].filter(Boolean))
+
+    // Spouse
+    let spouse = null
+    if (member.spouse_id) {
+        const { data: spouseData } = await supabase
+            .from('family_members')
+            .select('id, name, image_url')
+            .eq('id', member.spouse_id)
+            .single()
+        spouse = spouseData
+    }
+
+    // Children
     const { data: children } = await supabase
         .from('family_members')
-        .select('id, name, nickname, birth_year')
-        .or(`father_id.eq.${member.id},mother_id.eq.${member.id}`)
+        .select('id, name, image_url')
+        .or(`father_id.eq.${id},mother_id.eq.${id}`)
 
-    const relatedIds = [member.father_id, member.mother_id, member.spouse_id].filter(Boolean) as string[]
-    const { data: relatives } = await supabase
-        .from('family_members')
-        .select('id, name, nickname')
-        .in('id', relatedIds)
-
-    const findRelative = (rid: string | null) => relatives?.find(r => r.id === rid)
+    const father = parents?.find(p => p.id === member.father_id)
+    const mother = parents?.find(p => p.id === member.mother_id)
 
     return (
-        <div className="min-h-screen bg-[#FDFCFB] text-stone-800 pb-20" dir="rtl">
-
-            {/* --- HEADER --- */}
-            <div className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors font-bold text-sm">
-                        <ArrowRight className="w-5 h-5" />
-                        <span>חזרה לספרייה</span>
-                    </Link>
-                    <div className="text-stone-400 font-serif italic text-sm">Family Archive</div>
+        <main className="min-h-screen bg-stone-50 pb-32">
+            {/* Header / Breadcrumb */}
+            <div className="bg-white border-b border-stone-200 py-8 mb-12">
+                <div className="max-w-5xl mx-auto px-6">
+                    <nav className="flex items-center gap-2 text-stone-400 text-sm font-bold">
+                        <Link href="/" className="hover:text-primary flex items-center gap-1 text-stone-400">
+                            <Home size={14} />
+                            בית
+                        </Link>
+                        <ChevronRight size={14} />
+                        <Link href="/family" className="hover:text-primary text-stone-400">ספר המשפחה</Link>
+                        <ChevronRight size={14} />
+                        <span className="text-primary">{member.name}</span>
+                    </nav>
                 </div>
             </div>
 
-            <main className="max-w-6xl mx-auto px-4 pt-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="max-w-5xl mx-auto px-6">
+                <div className="grid md:grid-cols-3 gap-12">
+                    {/* Sidebar: Profile Card & Quick Info */}
+                    <div className="md:col-span-1 space-y-8">
+                        <div className="bg-white rounded-[2.5rem] p-8 heritage-shadow border border-stone-100 text-center">
+                            <div className="relative mb-6 mx-auto">
+                                <div className="w-48 h-48 rounded-[3.5rem] overflow-hidden bg-stone-100 border-8 border-stone-50 heritage-shadow mx-auto">
+                                    {member.image_url ? (
+                                        <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-stone-300">
+                                            <UserIcon size={64} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
-                    {/* --- COLUMN 1: PROFILE INFO --- */}
-                    <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-stone-100 overflow-hidden">
-                            <div className="relative aspect-[4/5] bg-stone-100">
-                                {member.image_url ? (
-                                    <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-stone-200">
-                                        <User className="w-32 h-32" strokeWidth={1} />
+                            <h1 className="text-3xl font-serif font-black text-primary mb-2">
+                                {member.name}
+                            </h1>
+                            {member.nickname && (
+                                <p className="text-stone-400 font-bold italic mb-6">"{member.nickname}"</p>
+                            )}
+
+                            <div className="space-y-4 text-right">
+                                {(member.birth_year || member.birth_date) && (
+                                    <div className="flex items-center gap-3 text-stone-600 bg-stone-50 p-4 rounded-2xl border border-stone-100/50 text-right" dir="rtl">
+                                        <Calendar size={18} className="text-secondary" />
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">תאריך לידה</p>
+                                            <p className="font-bold">{member.birth_date || member.birth_year}</p>
+                                        </div>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="absolute bottom-8 right-8 text-white">
-                                    <h1 className="text-4xl font-black tracking-tight">{member.name}</h1>
-                                    {member.nickname && <p className="text-amber-200 font-bold italic mt-1 opacity-90">"{member.nickname}"</p>}
-                                </div>
+
+                                {member.birth_place && (
+                                    <div className="flex items-center gap-3 text-stone-600 bg-stone-50 p-4 rounded-2xl border border-stone-100/50 text-right" dir="rtl">
+                                        <MapPin size={18} className="text-secondary" />
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">מקום לידה</p>
+                                            <p className="font-bold">{member.birth_place}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(member.death_year || member.death_date) && (
+                                    <div className="flex items-center gap-3 text-stone-600 bg-stone-50 p-4 rounded-2xl border border-stone-100/50 text-right" dir="rtl">
+                                        <div className="w-5 h-5 flex items-center justify-center">🕯️</div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">פטירה</p>
+                                            <p className="font-bold">{member.death_date || member.death_year}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+                        </div>
 
-                            <div className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-stone-50 rounded-2xl text-center">
-                                        <div className="text-[10px] font-black text-stone-400 uppercase mb-1">שנת לידה</div>
-                                        <div className="text-xl font-black text-stone-800">{member.birth_year || '????'}</div>
-                                    </div>
-                                    <div className="p-4 bg-stone-50 rounded-2xl text-center">
-                                        <div className="text-[10px] font-black text-stone-400 uppercase mb-1">סטטוס</div>
-                                        <div className="text-xl font-black text-amber-700">{member.status || 'פעיל'}</div>
-                                    </div>
-                                </div>
-
+                        {/* Contact Info if available */}
+                        {(member.phone || member.email) && (
+                            <div className="bg-white rounded-[2.5rem] p-8 heritage-shadow border border-stone-100">
+                                <h3 className="text-lg font-serif font-black text-primary mb-4 flex items-center gap-2">
+                                    <Phone size={18} className="text-secondary" />
+                                    יצירת קשר
+                                </h3>
                                 <div className="space-y-3">
                                     {member.phone && (
-                                        <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl">
-                                            <Phone className="w-5 h-5 text-amber-600" />
-                                            <span className="font-bold text-sm ltr">{member.phone}</span>
-                                        </div>
+                                        <a href={`tel:${member.phone}`} className="flex items-center gap-3 text-stone-600 hover:text-primary transition-colors font-bold">
+                                            <Phone size={16} />
+                                            {member.phone}
+                                        </a>
                                     )}
                                     {member.email && (
-                                        <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl">
-                                            <Mail className="w-5 h-5 text-amber-600" />
-                                            <span className="font-bold text-sm truncate ltr">{member.email}</span>
-                                        </div>
+                                        <a href={`mailto:${member.email}`} className="flex items-center gap-3 text-stone-600 hover:text-primary transition-colors font-bold truncate">
+                                            <Mail size={16} />
+                                            {member.email}
+                                        </a>
                                     )}
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Relatives Card */}
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-stone-100">
-                            <h3 className="text-lg font-black mb-6 flex items-center gap-3">
-                                <Heart className="w-5 h-5 text-rose-400" />
-                                מעגלים קרובים
-                            </h3>
-                            <div className="space-y-3">
-                                {[
-                                    { key: 'father_id', label: 'אבא' },
-                                    { key: 'mother_id', label: 'אמא' },
-                                    { key: 'spouse_id', label: 'בן/בת זוג' }
-                                ].map((rel) => {
-                                    const rid = member[rel.key]
-                                    const record = findRelative(rid)
-                                    return rid ? (
-                                        <Link key={rel.key} href={`/family/${rid}`} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-200">
-                                            <div className="overflow-hidden">
-                                                <p className="text-[10px] font-bold text-stone-400 uppercase">{rel.label}</p>
-                                                <p className="font-black text-stone-800 truncate">{record?.name || 'צפייה בפרופיל'}</p>
-                                            </div>
-                                            <ChevronLeft className="w-5 h-5 text-stone-300" />
-                                        </Link>
-                                    ) : null
-                                })}
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* --- COLUMN 2: STORY, GALLERY & CHILDREN --- */}
-                    <div className="lg:col-span-8 space-y-8">
-
+                    {/* Main Content: Story & Relationships */}
+                    <div className="md:col-span-2 space-y-12">
                         {/* Life Story */}
-                        <section className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-stone-100">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-700">
-                                    <Home className="w-7 h-7" />
-                                </div>
-                                <div>
-                                    <h2 className="text-3xl font-black text-stone-900">סיפור החיים</h2>
-                                    <p className="text-stone-400 font-bold text-xs uppercase tracking-wider">תיעוד היסטורי משפחתי</p>
-                                </div>
-                            </div>
-
+                        <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100">
+                            <h2 className="text-2xl font-serif font-black text-primary mb-6 flex items-center gap-3">
+                                <BookOpen size={24} className="text-secondary" />
+                                סיפור חיים
+                            </h2>
                             <div className="prose prose-stone max-w-none">
-                                <div
-                                    className="text-stone-700 text-lg md:text-xl leading-relaxed font-medium whitespace-pre-wrap"
-                                    dangerouslySetInnerHTML={{ __html: member.life_story || '<p class="italic text-stone-300">הסיפור טרם תועד בארכיון...</p>' }}
-                                />
+                                {member.life_story ? (
+                                    <p className="text-stone-600 leading-relaxed font-medium whitespace-pre-wrap text-lg">
+                                        {member.life_story}
+                                    </p>
+                                ) : (
+                                    <p className="text-stone-400 italic font-bold">טרם הוזן סיפור חיים עבור {member.name}.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Relationships */}
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-serif font-black text-primary flex items-center gap-3">
+                                <UsersIcon size={24} className="text-secondary" />
+                                קשרים משפחתיים
+                            </h2>
+
+                            <div className="grid sm:grid-cols-2 gap-6">
+                                {/* Parents Section */}
+                                <div className="bg-stone-100/50 p-6 rounded-[2rem] border border-stone-200/50">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-stone-400 mb-4">הורים</h3>
+                                    <div className="space-y-4">
+                                        {father ? (
+                                            <Link href={`/family/${father.id}`} className="flex items-center gap-3 p-2 bg-white rounded-2xl hover:bg-stone-50 transition-colors heritage-shadow shadow-sm">
+                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
+                                                    {father.image_url ? <img src={father.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-stone-300 font-bold">א</div>}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-stone-400 uppercase">אבא</p>
+                                                    <p className="font-bold text-stone-800">{father.name}</p>
+                                                </div>
+                                            </Link>
+                                        ) : (
+                                            <div className="text-stone-400 text-sm italic py-2 font-bold text-right">לא צוין אבא</div>
+                                        )}
+                                        {mother ? (
+                                            <Link href={`/family/${mother.id}`} className="flex items-center gap-3 p-2 bg-white rounded-2xl hover:bg-stone-50 transition-colors heritage-shadow shadow-sm">
+                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
+                                                    {mother.image_url ? <img src={mother.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-stone-300 font-bold">א</div>}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-stone-400 uppercase">אמא</p>
+                                                    <p className="font-bold text-stone-800">{mother.name}</p>
+                                                </div>
+                                            </Link>
+                                        ) : (
+                                            <div className="text-stone-400 text-sm italic py-2 font-bold text-right">לא צוינה אמא</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Spouse Section */}
+                                <div className="bg-stone-100/50 p-6 rounded-[2rem] border border-stone-200/50">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-stone-400 mb-4">בן/בת זוג</h3>
+                                    {spouse ? (
+                                        <Link href={`/family/${spouse.id}`} className="flex items-center gap-3 p-2 bg-white rounded-2xl hover:bg-stone-50 transition-colors heritage-shadow shadow-sm">
+                                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
+                                                {spouse.image_url ? <img src={spouse.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-stone-300 font-bold">ב</div>}
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-stone-400 uppercase">בן/בת זוג</p>
+                                                <p className="font-bold text-stone-800">{spouse.name}</p>
+                                            </div>
+                                        </Link>
+                                    ) : member.unlinked_spouse_name ? (
+                                        <div className="bg-white p-4 rounded-2xl font-bold text-stone-600 border border-stone-100 italic">
+                                            {member.unlinked_spouse_name}
+                                        </div>
+                                    ) : (
+                                        <div className="text-stone-400 text-sm italic py-2 font-bold text-right">לא צוין בן/בת זוג</div>
+                                    )}
+                                </div>
                             </div>
 
-                            {member.birth_place_notes && (
-                                <div className="mt-12 p-8 bg-amber-50/50 rounded-3xl border-r-4 border-amber-400 italic">
-                                    <p className="text-stone-600 text-lg font-semibold leading-relaxed">"{member.birth_place_notes}"</p>
+                            {/* Children Section */}
+                            {children && children.length > 0 && (
+                                <div className="bg-stone-100/50 p-8 rounded-[2.5rem] border border-stone-200/50">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-stone-400 mb-6">ילדים</h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {children.map(child => (
+                                            <Link key={child.id} href={`/family/${child.id}`} className="flex flex-col items-center gap-3 p-4 bg-white rounded-3xl hover:bg-stone-50 transition-all heritage-shadow shadow-sm group">
+                                                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-stone-100 border-2 border-white group-hover:scale-105 transition-transform">
+                                                    {child.image_url ? <img src={child.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-stone-300"><UserIcon size={24} /></div>}
+                                                </div>
+                                                <span className="font-bold text-stone-800 text-sm text-center line-clamp-1">{child.name}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                        </section>
+                        </div>
 
-                        {/* --- GALLERY SECTION (אלבום משפחתי) --- */}
+                        {/* Media Gallery / Story Images */}
                         {member.story_images && Array.isArray(member.story_images) && member.story_images.length > 0 && (
-                            <section className="space-y-6">
-                                <div className="flex items-center gap-4 px-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-stone-400 border border-stone-200 shadow-sm">
-                                        <ImageIcon className="w-5 h-5" />
-                                    </div>
-                                    <h2 className="text-2xl font-black">אלבום משפחתי</h2>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                            <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100">
+                                <h2 className="text-2xl font-serif font-black text-primary mb-8 flex items-center gap-3">
+                                    <Camera size={24} className="text-secondary" />
+                                    גלריית זכרונות
+                                </h2>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                                     {member.story_images.map((img: any, idx: number) => (
-                                        <div key={idx} className="group relative aspect-square rounded-[2rem] overflow-hidden border-4 border-white shadow-md bg-stone-50">
+                                        <div key={idx} className="aspect-square rounded-2xl overflow-hidden bg-stone-100 group cursor-pointer relative">
                                             <img
                                                 src={typeof img === 'string' ? img : img.url}
-                                                alt="Family Archive"
+                                                alt={`זכרון ${idx + 1}`}
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
                                         </div>
                                     ))}
                                 </div>
-                            </section>
-                        )}
-
-                        {/* Next Generation */}
-                        {children && children.length > 0 && (
-                            <section className="space-y-6">
-                                <div className="flex items-center gap-4 px-4">
-                                    <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center text-white">
-                                        <Users className="w-5 h-5" />
-                                    </div>
-                                    <h2 className="text-2xl font-black">הדור הבא ({children.length})</h2>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {children.map(child => (
-                                        <Link key={child.id} href={`/family/${child.id}`} className="flex items-center justify-between p-6 bg-white rounded-3xl shadow-sm border border-stone-100 hover:border-amber-400 transition-all group">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-stone-50 rounded-xl flex items-center justify-center text-stone-300 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
-                                                    <User className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-black text-stone-800">{child.name}</h4>
-                                                    <p className="text-xs font-bold text-stone-400 uppercase">{child.birth_year || '????'}</p>
-                                                </div>
-                                            </div>
-                                            <ChevronLeft className="w-5 h-5 text-stone-300 group-hover:text-amber-600 transition-colors" />
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
-
-                        {/* Technical Metadata */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="bg-stone-100/50 p-6 rounded-2xl flex items-center gap-4">
-                                <Clock className="w-5 h-5 text-stone-300" />
-                                <div>
-                                    <p className="text-[10px] font-black text-stone-400 uppercase">עדכון אחרון</p>
-                                    <p className="text-sm font-bold text-stone-700">{new Date(member.updated_date || Date.now()).toLocaleDateString('he-IL')}</p>
-                                </div>
                             </div>
-                            <div className="bg-stone-100/50 p-6 rounded-2xl flex items-center gap-4">
-                                <MapPin className="w-5 h-5 text-stone-300" />
-                                <div>
-                                    <p className="text-[10px] font-black text-stone-400 uppercase">מקום לידה</p>
-                                    <p className="text-sm font-bold text-stone-700">{member.birth_place || 'לא צוין'}</p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
     )
 }

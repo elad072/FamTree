@@ -2,45 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Warm Romantic Palette */
-  --background: #fdfaf6;
-  /* Ivory / Cream */
-  --foreground: #2d241e;
-  /* Deep Brown */
-  --accent: #d4af37;
-  /* Soft Gold */
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(212, 175, 55, 0.2);
+@layer base {
+  :root {
+    --background: 34 33% 98%;      /* #fdfaf6 (Beige) */
+    --foreground: 25 21% 15%;      /* #2d241e (Deep Brown) */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 25 21% 15%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 21% 15%;
+ 
+    --primary: 215 50% 23%;       /* Navy */
+    --primary-foreground: 34 33% 98%;
+ 
+    --secondary: 45 61% 52%;      /* Gold/Antique */
+    --secondary-foreground: 25 21% 15%;
+ 
+    --muted: 24 10% 90%;
+    --muted-foreground: 25 10% 45%;
+ 
+    --accent: 45 61% 52%;
+    --accent-foreground: 25 21% 15%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 34 33% 98%;
+
+    --border: 25 10% 90%;
+    --input: 25 10% 90%;
+    --ring: 215 50% 23%;
+ 
+    --radius: 0.5rem;
+  }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(212, 175, 55, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(183, 138, 123, 0.05) 0px, transparent 50%);
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl;
+  .heritage-gradient {
+    background: linear-gradient(135deg, #fdfaf6 0%, #f3e5d8 100%);
+  }
+  
+  .heritage-shadow {
+    box-shadow: 0 20px 50px -12px rgba(45, 36, 30, 0.1);
   }
 
-  .glass-card {
-    background: rgba(255, 252, 248, 0.6);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    box-shadow: 0 10px 40px -10px rgba(45, 36, 30, 0.08);
-  }
-
-  .romantic-shadow {
-    box-shadow: 0 20px 50px -12px rgba(183, 138, 123, 0.15);
-  }
-
-  .text-sepia {
-    color: #5d4037;
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
