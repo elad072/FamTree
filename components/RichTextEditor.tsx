@@ -30,7 +30,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     const formats = [
         'header',
         'bold', 'italic', 'underline', 'strike',
-        'list', 'bullet', 'direction', 'align'
+        'list', 'direction', 'align'
     ]
 
     return (

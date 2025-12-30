@@ -82,22 +82,25 @@ export default async function HomePage() {
 
                     <div className="flex items-center gap-8">
                         {user ? (
-                            <div className="flex items-center gap-8">
-                                <div className="hidden md:flex items-center gap-6">
+                            <div className="flex items-center gap-4 md:gap-8">
+                                <div className="flex items-center gap-4 md:gap-6">
                                     {isAdmin && (
                                         <Link
                                             href="/admin"
                                             className="text-stone-500 hover:text-primary font-black text-sm transition-colors flex items-center gap-2"
+                                            title="ניהול"
                                         >
                                             <ShieldCheck size={18} />
-                                            ניהול
+                                            <span className="hidden md:inline">ניהול</span>
                                         </Link>
                                     )}
                                     <Link
                                         href="/family"
-                                        className="text-stone-500 hover:text-primary font-black text-sm transition-colors"
+                                        className="text-stone-500 hover:text-primary font-black text-sm transition-colors flex items-center gap-2"
+                                        title="ספר המשפחה"
                                     >
-                                        ספר המשפחה
+                                        <Users size={18} className="md:hidden" />
+                                        <span className="hidden md:inline">ספר המשפחה</span>
                                     </Link>
                                 </div>
                                 <div className="h-8 w-px bg-stone-200 hidden md:block" />

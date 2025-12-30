@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
+import SearchableSelect from '@/components/SearchableSelect'
 
 export default function AddMemberPage() {
     const supabase = createClient()
@@ -356,46 +357,31 @@ export default function AddMemberPage() {
                             </h2>
 
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-black text-stone-500 mb-2">אבא</label>
-                                        <select
-                                            name="father_id"
-                                            value={formData.father_id}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                                        >
-                                            <option value="">בחר/י מהרשימה</option>
-                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-black text-stone-500 mb-2">אמא</label>
-                                        <select
-                                            name="mother_id"
-                                            value={formData.mother_id}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                                        >
-                                            <option value="">בחר/י מהרשימה</option>
-                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                        </select>
-                                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <SearchableSelect
+                                        label="אבא"
+                                        options={members}
+                                        value={formData.father_id}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, father_id: val }))}
+                                        placeholder="בחר/י מהרשימה"
+                                    />
+                                    <SearchableSelect
+                                        label="אמא"
+                                        options={members}
+                                        value={formData.mother_id}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, mother_id: val }))}
+                                        placeholder="בחר/י מהרשימה"
+                                    />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-black text-stone-500 mb-2">בן/בת זוג (מתוך המערכת)</label>
-                                        <select
-                                            name="spouse_id"
-                                            value={formData.spouse_id}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                                        >
-                                            <option value="">ללא / לא ברשימה</option>
-                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                        </select>
-                                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <SearchableSelect
+                                        label="בן/בת זוג (מתוך המערכת)"
+                                        options={members}
+                                        value={formData.spouse_id}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, spouse_id: val }))}
+                                        placeholder="ללא / לא ברשימה"
+                                    />
                                     <div>
                                         <label className="block text-sm font-black text-stone-500 mb-2">שם בן/בת זוג (אם לא ברשימה)</label>
                                         <input
