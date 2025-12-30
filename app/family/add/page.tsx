@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
 import SearchableSelect from '@/components/SearchableSelect'
+import GalleryUpload from '@/components/GalleryUpload'
 
 export default function AddMemberPage() {
     const supabase = createClient()
@@ -41,6 +42,7 @@ export default function AddMemberPage() {
         death_year: '',
         is_alive: true,
         image_url: '',
+        story_images: [] as string[],
         life_story: '',
         childhood_stories: '',
         father_id: '',
@@ -102,6 +104,7 @@ export default function AddMemberPage() {
                     death_day: !formData.is_alive && formData.death_day ? parseInt(formData.death_day) : null,
                     death_date: !formData.is_alive && formData.death_year ? `${formData.death_year}-${formData.death_month?.padStart(2, '0') || '01'}-${formData.death_day?.padStart(2, '0') || '01'}` : null,
                     image_url: formData.image_url || null,
+                    story_images: formData.story_images,
                     life_story: formData.life_story,
                     childhood_stories: formData.childhood_stories ? [formData.childhood_stories] : [],
                     father_id: formData.father_id || null,
@@ -431,6 +434,11 @@ export default function AddMemberPage() {
                                         placeholder="כתבו כאן את סיפור החיים של בן המשפחה..."
                                     />
                                 </div>
+
+                                <GalleryUpload
+                                    images={formData.story_images}
+                                    onChange={(urls) => setFormData(prev => ({ ...prev, story_images: urls }))}
+                                />
                             </div>
 
                             <div className="flex gap-4 pt-4">
@@ -538,6 +546,7 @@ export default function AddMemberPage() {
                                             death_year: '',
                                             is_alive: true,
                                             image_url: '',
+                                            story_images: [],
                                             life_story: '',
                                             childhood_stories: '',
                                             father_id: '',

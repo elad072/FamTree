@@ -14,6 +14,7 @@ import {
 import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
 import SearchableSelect from '@/components/SearchableSelect'
+import GalleryUpload from '@/components/GalleryUpload'
 
 export default function EditMemberPage() {
     const supabase = createClient()
@@ -39,6 +40,7 @@ export default function EditMemberPage() {
         death_year: '',
         is_alive: true,
         image_url: '',
+        story_images: [] as string[],
         life_story: '',
         childhood_stories: '',
         father_id: '',
@@ -93,6 +95,7 @@ export default function EditMemberPage() {
                     death_year: member.death_year?.toString() || '',
                     is_alive: !member.death_year && !member.death_date,
                     image_url: member.image_url || '',
+                    story_images: member.story_images || [],
                     life_story: member.life_story || '',
                     childhood_stories: member.childhood_stories?.[0] || '',
                     father_id: member.father_id || '',
@@ -149,6 +152,7 @@ export default function EditMemberPage() {
                     death_day: !formData.is_alive && formData.death_day ? parseInt(formData.death_day) : null,
                     death_date: !formData.is_alive && formData.death_year ? `${formData.death_year}-${formData.death_month?.padStart(2, '0') || '01'}-${formData.death_day?.padStart(2, '0') || '01'}` : null,
                     image_url: formData.image_url || null,
+                    story_images: formData.story_images,
                     life_story: formData.life_story,
                     childhood_stories: formData.childhood_stories ? [formData.childhood_stories] : [],
                     father_id: formData.father_id || null,
@@ -410,6 +414,12 @@ export default function EditMemberPage() {
                                 placeholder="כתבו כאן את סיפור החיים של בן המשפחה..."
                             />
                         </div>
+
+                        <GalleryUpload
+                            images={formData.story_images}
+                            onChange={(urls) => setFormData(prev => ({ ...prev, story_images: urls }))}
+                            memberId={id}
+                        />
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
