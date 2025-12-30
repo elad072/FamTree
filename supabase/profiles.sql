@@ -5,11 +5,13 @@ create table if not exists public.profiles (
   is_approved boolean default false,
   full_name text,
   email text,
+  avatar_url text,
   created_at timestamp with time zone default now()
 );
 
--- Ensure the is_approved column exists even if table was created previously
+-- Ensure the is_approved and avatar_url columns exist even if table was created previously
 alter table public.profiles add column if not exists is_approved boolean default false;
+alter table public.profiles add column if not exists avatar_url text;
 
 -- 2. Enable RLS
 alter table public.profiles enable row level security;
@@ -44,7 +46,7 @@ begin
   -- Use EXISTS for better performance and safety
   select not exists (select 1 from public.profiles) into is_first_user;
 
-  insert into public.profiles (id, full_name, email, role, is_approved)
+  insert into public.profiles (id, full_name, email, role, is_approved, avatar_url)
   values (
     new.id, 
     coalesce(
@@ -55,7 +57,8 @@ begin
     ), 
     new.email, 
     case when is_first_user then 'admin' else 'member' end,
-    is_first_user -- First user is auto-approved
+    is_first_user, -- First user is auto-approved
+    new.raw_user_meta_data->>'avatar_url'
   )
   on conflict (id) do nothing; -- Prevent errors if profile already exists
 

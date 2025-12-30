@@ -1,3 +1,4 @@
+import React from 'react'
 import { createClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -17,6 +18,8 @@ import {
 } from 'lucide-react'
 import DeleteImageButton from '@/components/DeleteImageButton'
 import GallerySection from '@/components/GallerySection'
+import CommentsSection from '@/components/CommentsSection'
+import { getHebrewDate } from '@/utils/hebrewDate'
 
 export default async function MemberProfilePage({
     params,
@@ -111,12 +114,16 @@ export default async function MemberProfilePage({
                         <div className="bg-white rounded-[2.5rem] p-8 heritage-shadow border border-stone-100 text-center relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-stone-50 to-white -z-0" />
                             
-                            <div className="relative mb-6 mx-auto z-10">
-                                <div className="w-48 h-48 rounded-[3.5rem] overflow-hidden bg-stone-100 border-8 border-white heritage-shadow mx-auto group relative">
-                                    {member.image_url ? (
-                                        <>
-                                            <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                                            {isAdmin && (
+                                    <div className="relative mb-6 mx-auto z-10">
+                                        <div className="w-48 h-48 rounded-[3.5rem] overflow-hidden bg-stone-100 border-8 border-white heritage-shadow mx-auto group relative">
+                                            {member.image_url ? (
+                                                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-stone-300">
+                                                    <UserIcon size={64} />
+                                                </div>
+                                            )}
+                                            {isAdmin && member.image_url && (
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                     <DeleteImageButton
                                                         memberId={id}
@@ -126,14 +133,8 @@ export default async function MemberProfilePage({
                                                     />
                                                 </div>
                                             )}
-                                        </>
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-stone-300">
-                                            <UserIcon size={64} />
                                         </div>
-                                    )}
-                                </div>
-                            </div>
+                                    </div>
 
                             <h1 className="text-3xl font-serif font-black text-primary mb-2 relative z-10">
                                 {member.name}
@@ -149,6 +150,9 @@ export default async function MemberProfilePage({
                                         <div className="text-right">
                                             <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">תאריך לידה</p>
                                             <p className="font-bold">{member.birth_date || member.birth_year}</p>
+                                            {member.birth_date && (
+                                                <p className="text-[10px] font-bold text-secondary">{getHebrewDate(member.birth_date)}</p>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -169,6 +173,9 @@ export default async function MemberProfilePage({
                                         <div className="text-right">
                                             <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">פטירה</p>
                                             <p className="font-bold">{member.death_date || member.death_year}</p>
+                                            {member.death_date && (
+                                                <p className="text-[10px] font-bold text-secondary">{getHebrewDate(member.death_date)}</p>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -322,6 +329,13 @@ export default async function MemberProfilePage({
                                 </div>
                             )}
                         </div>
+
+                        {/* Comments Section */}
+                        <CommentsSection 
+                            memberId={id} 
+                            currentUserId={user?.id} 
+                            isAdmin={isAdmin} 
+                        />
                     </div>
                 </div>
             </div>
