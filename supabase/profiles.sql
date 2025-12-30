@@ -23,6 +23,15 @@ drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile" on public.profiles
   for update using (auth.uid() = id);
 
+drop policy if exists "Admins can update any profile" on public.profiles;
+create policy "Admins can update any profile" on public.profiles
+  for update using (
+    exists (
+      select 1 from public.profiles
+      where profiles.id = auth.uid() and profiles.role = 'admin'
+    )
+  );
+
 -- 4. Robust Trigger Function
 create or replace function public.handle_new_user()
 returns trigger 

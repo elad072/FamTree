@@ -16,6 +16,7 @@ import {
     AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
+import RichTextEditor from '@/components/RichTextEditor'
 
 export default function AddMemberPage() {
     const supabase = createClient()
@@ -29,12 +30,23 @@ export default function AddMemberPage() {
     const [formData, setFormData] = useState({
         name: '',
         nickname: '',
+        birth_day: '',
+        birth_month: '',
         birth_year: '',
         birth_place: '',
+        birth_place_notes: '',
+        death_day: '',
+        death_month: '',
+        death_year: '',
+        is_alive: true,
+        image_url: '',
         life_story: '',
+        childhood_stories: '',
         father_id: '',
         mother_id: '',
         spouse_id: '',
+        unlinked_spouse_name: '',
+        marital_status: 'single',
         phone: '',
         email: ''
     })
@@ -53,8 +65,14 @@ export default function AddMemberPage() {
     }, [supabase])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
+        const { name, value, type } = e.target
+
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked
+            setFormData(prev => ({ ...prev, [name]: checked }))
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }))
+        }
     }
 
     const handleSubmit = async () => {
@@ -73,11 +91,23 @@ export default function AddMemberPage() {
                     name: formData.name,
                     nickname: formData.nickname,
                     birth_year: formData.birth_year ? parseInt(formData.birth_year) : null,
+                    birth_month: formData.birth_month ? parseInt(formData.birth_month) : null,
+                    birth_day: formData.birth_day ? parseInt(formData.birth_day) : null,
+                    birth_date: formData.birth_year ? `${formData.birth_year}-${formData.birth_month?.padStart(2, '0') || '01'}-${formData.birth_day?.padStart(2, '0') || '01'}` : null,
                     birth_place: formData.birth_place,
+                    birth_place_notes: formData.birth_place_notes,
+                    death_year: !formData.is_alive && formData.death_year ? parseInt(formData.death_year) : null,
+                    death_month: !formData.is_alive && formData.death_month ? parseInt(formData.death_month) : null,
+                    death_day: !formData.is_alive && formData.death_day ? parseInt(formData.death_day) : null,
+                    death_date: !formData.is_alive && formData.death_year ? `${formData.death_year}-${formData.death_month?.padStart(2, '0') || '01'}-${formData.death_day?.padStart(2, '0') || '01'}` : null,
+                    image_url: formData.image_url || null,
                     life_story: formData.life_story,
+                    childhood_stories: formData.childhood_stories ? [formData.childhood_stories] : [],
                     father_id: formData.father_id || null,
                     mother_id: formData.mother_id || null,
                     spouse_id: formData.spouse_id || null,
+                    unlinked_spouse_name: formData.unlinked_spouse_name || null,
+                    marital_status: formData.marital_status,
                     phone: formData.phone,
                     email: formData.email,
                     status: 'pending',
@@ -87,7 +117,8 @@ export default function AddMemberPage() {
 
             if (submitError) throw submitError
 
-            setStep(4) // Success step
+            // Redirect to admin page for approval
+            router.push('/admin')
         } catch (err: any) {
             setError(err.message)
             setLoading(false)
@@ -157,7 +188,31 @@ export default function AddMemberPage() {
                                         placeholder='למשל: "שרוליק"'
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-black text-stone-500 mb-2">יום לידה</label>
+                                        <input
+                                            type="number"
+                                            name="birth_day"
+                                            min="1" max="31"
+                                            value={formData.birth_day}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                            placeholder="DD"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-black text-stone-500 mb-2">חודש לידה</label>
+                                        <input
+                                            type="number"
+                                            name="birth_month"
+                                            min="1" max="12"
+                                            value={formData.birth_month}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                            placeholder="MM"
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-black text-stone-500 mb-2">שנת לידה</label>
                                         <input
@@ -166,9 +221,12 @@ export default function AddMemberPage() {
                                             value={formData.birth_year}
                                             onChange={handleInputChange}
                                             className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
-                                            placeholder="1950"
+                                            placeholder="YYYY"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-black text-stone-500 mb-2">מקום לידה</label>
                                         <input
@@ -179,6 +237,102 @@ export default function AddMemberPage() {
                                             className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                                             placeholder="עיר/מדינה"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-black text-stone-500 mb-2">הערות ללידה</label>
+                                        <input
+                                            type="text"
+                                            name="birth_place_notes"
+                                            value={formData.birth_place_notes}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                            placeholder="למשל: בבית החולים הישן..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                                    <label className="flex items-center gap-3 cursor-pointer mb-4">
+                                        <input
+                                            type="checkbox"
+                                            name="is_alive"
+                                            checked={formData.is_alive}
+                                            onChange={handleInputChange}
+                                            className="w-5 h-5 rounded-md text-primary focus:ring-primary bg-white border-stone-300"
+                                        />
+                                        <span className="font-bold text-stone-600">בן המשפחה בחיים</span>
+                                    </label>
+
+                                    {!formData.is_alive && (
+                                        <div className="grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                                            <div>
+                                                <label className="block text-sm font-black text-stone-500 mb-2">יום פטירה</label>
+                                                <input
+                                                    type="number"
+                                                    name="death_day"
+                                                    min="1" max="31"
+                                                    value={formData.death_day}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-white border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                                    placeholder="DD"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-black text-stone-500 mb-2">חודש פטירה</label>
+                                                <input
+                                                    type="number"
+                                                    name="death_month"
+                                                    min="1" max="12"
+                                                    value={formData.death_month}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-white border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                                    placeholder="MM"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-black text-stone-500 mb-2">שנת פטירה</label>
+                                                <input
+                                                    type="number"
+                                                    name="death_year"
+                                                    value={formData.death_year}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-white border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                                    placeholder="YYYY"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-black text-stone-500 mb-2">תמונת פרופיל</label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0]
+                                                if (file) {
+                                                    setFormData(prev => ({ ...prev, image_url: URL.createObjectURL(file) }))
+                                                }
+                                            }}
+                                            className="hidden"
+                                            id="image-upload"
+                                        />
+                                        <label
+                                            htmlFor="image-upload"
+                                            className="w-full bg-stone-50 border-2 border-dashed border-stone-200 rounded-2xl py-8 px-6 hover:border-primary/40 transition-all cursor-pointer flex flex-col items-center gap-3 group"
+                                        >
+                                            <Camera size={32} className="text-stone-300 group-hover:text-primary transition-colors" />
+                                            <span className="text-sm font-black text-stone-400 group-hover:text-primary transition-colors">
+                                                לחצו להעלאת תמונה
+                                            </span>
+                                            {formData.image_url && (
+                                                <div className="mt-2 w-24 h-24 rounded-xl overflow-hidden border-2 border-white shadow-lg">
+                                                    <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -229,14 +383,65 @@ export default function AddMemberPage() {
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-black text-stone-500 mb-2">בן/בת זוג (מתוך המערכת)</label>
+                                        <select
+                                            name="spouse_id"
+                                            value={formData.spouse_id}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                        >
+                                            <option value="">ללא / לא ברשימה</option>
+                                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-black text-stone-500 mb-2">שם בן/בת זוג (אם לא ברשימה)</label>
+                                        <input
+                                            type="text"
+                                            name="unlinked_spouse_name"
+                                            value={formData.unlinked_spouse_name}
+                                            onChange={handleInputChange}
+                                            disabled={!!formData.spouse_id}
+                                            className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold disabled:opacity-50"
+                                            placeholder="ישראל ישראלי"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-black text-stone-500 mb-2">סטטוס משפחתי</label>
+                                    <select
+                                        name="marital_status"
+                                        value={formData.marital_status}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                    >
+                                        <option value="single">רווק/ה</option>
+                                        <option value="married">נשוי/אה</option>
+                                        <option value="divorced">גרוש/ה</option>
+                                        <option value="widowed">אלמן/ה</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-black text-stone-500 mb-2">זיכרונות ילדות (אופציונלי)</label>
+                                    <textarea
+                                        name="childhood_stories"
+                                        value={formData.childhood_stories}
+                                        onChange={handleInputChange}
+                                        rows={4}
+                                        className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold resize-none"
+                                        placeholder="סיפור קצר מהילדות..."
+                                    />
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-black text-stone-500 mb-2">סיפור חיים</label>
-                                    <textarea
-                                        name="life_story"
+                                    <RichTextEditor
                                         value={formData.life_story}
-                                        onChange={handleInputChange}
-                                        rows={6}
-                                        className="w-full bg-stone-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold resize-none"
+                                        onChange={(content) => setFormData(prev => ({ ...prev, life_story: content }))}
                                         placeholder="כתבו כאן את סיפור החיים של בן המשפחה..."
                                     />
                                 </div>
@@ -337,12 +542,23 @@ export default function AddMemberPage() {
                                         setFormData({
                                             name: '',
                                             nickname: '',
+                                            birth_day: '',
+                                            birth_month: '',
                                             birth_year: '',
                                             birth_place: '',
+                                            birth_place_notes: '',
+                                            death_day: '',
+                                            death_month: '',
+                                            death_year: '',
+                                            is_alive: true,
+                                            image_url: '',
                                             life_story: '',
+                                            childhood_stories: '',
                                             father_id: '',
                                             mother_id: '',
                                             spouse_id: '',
+                                            unlinked_spouse_name: '',
+                                            marital_status: 'single',
                                             phone: '',
                                             email: ''
                                         })
@@ -357,6 +573,6 @@ export default function AddMemberPage() {
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     )
 }

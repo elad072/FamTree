@@ -12,8 +12,11 @@ import {
     Camera,
     Users as UsersIcon,
     Phone,
-    Mail
+    Mail,
+    Trash2
 } from 'lucide-react'
+import DeleteImageButton from '@/components/DeleteImageButton'
+import GallerySection from '@/components/GallerySection'
 
 export default async function MemberProfilePage({
     params,
@@ -34,11 +37,28 @@ export default async function MemberProfilePage({
         notFound()
     }
 
+    // Check if user is admin
+    const { data: { user } } = await supabase.auth.getUser()
+    let isAdmin = false
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+        isAdmin = profile?.role === 'admin'
+    }
+
+    // Check if member is approved or if user is admin
+    if (member.status !== 'approved' && !isAdmin) {
+        notFound()
+    }
+
     // Fetch relatives
     // Parents
     const { data: parents } = await supabase
         .from('family_members')
-        .select('id, name, image_url')
+        .select('id, name, image_url, status')
         .in('id', [member.father_id, member.mother_id].filter(Boolean))
 
     // Spouse
@@ -46,20 +66,25 @@ export default async function MemberProfilePage({
     if (member.spouse_id) {
         const { data: spouseData } = await supabase
             .from('family_members')
-            .select('id, name, image_url')
+            .select('id, name, image_url, status')
             .eq('id', member.spouse_id)
             .single()
         spouse = spouseData
     }
 
     // Children
-    const { data: children } = await supabase
+    const { data: childrenData } = await supabase
         .from('family_members')
-        .select('id, name, image_url')
+        .select('id, name, image_url, status')
         .or(`father_id.eq.${id},mother_id.eq.${id}`)
 
-    const father = parents?.find(p => p.id === member.father_id)
-    const mother = parents?.find(p => p.id === member.mother_id)
+    const approvedParents = parents?.filter(p => p.status === 'approved' || isAdmin) || []
+    const approvedSpouse = spouse && (spouse.status === 'approved' || isAdmin) ? spouse : null
+    const children = childrenData?.filter(c => c.status === 'approved' || isAdmin) || []
+
+    const father = approvedParents.find(p => p.id === member.father_id)
+    const mother = approvedParents.find(p => p.id === member.mother_id)
+    spouse = approvedSpouse
 
     return (
         <main className="min-h-screen bg-stone-50 pb-32">
@@ -83,11 +108,25 @@ export default async function MemberProfilePage({
                 <div className="grid md:grid-cols-3 gap-12">
                     {/* Sidebar: Profile Card & Quick Info */}
                     <div className="md:col-span-1 space-y-8">
-                        <div className="bg-white rounded-[2.5rem] p-8 heritage-shadow border border-stone-100 text-center">
-                            <div className="relative mb-6 mx-auto">
-                                <div className="w-48 h-48 rounded-[3.5rem] overflow-hidden bg-stone-100 border-8 border-stone-50 heritage-shadow mx-auto">
+                        <div className="bg-white rounded-[2.5rem] p-8 heritage-shadow border border-stone-100 text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-stone-50 to-white -z-0" />
+                            
+                            <div className="relative mb-6 mx-auto z-10">
+                                <div className="w-48 h-48 rounded-[3.5rem] overflow-hidden bg-stone-100 border-8 border-white heritage-shadow mx-auto group relative">
                                     {member.image_url ? (
-                                        <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                        <>
+                                            <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                            {isAdmin && (
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <DeleteImageButton
+                                                        memberId={id}
+                                                        type="profile"
+                                                        confirmMessage="האם למחוק את תמונת הפרופיל?"
+                                                        className="p-3 bg-white/90 text-rose-500 rounded-full hover:bg-white transition-colors"
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-stone-300">
                                             <UserIcon size={64} />
@@ -96,14 +135,14 @@ export default async function MemberProfilePage({
                                 </div>
                             </div>
 
-                            <h1 className="text-3xl font-serif font-black text-primary mb-2">
+                            <h1 className="text-3xl font-serif font-black text-primary mb-2 relative z-10">
                                 {member.name}
                             </h1>
                             {member.nickname && (
-                                <p className="text-stone-400 font-bold italic mb-6">"{member.nickname}"</p>
+                                <p className="text-stone-400 font-bold italic mb-6 relative z-10">"{member.nickname}"</p>
                             )}
 
-                            <div className="space-y-4 text-right">
+                            <div className="space-y-4 text-right relative z-10">
                                 {(member.birth_year || member.birth_date) && (
                                     <div className="flex items-center gap-3 text-stone-600 bg-stone-50 p-4 rounded-2xl border border-stone-100/50 text-right" dir="rtl">
                                         <Calendar size={18} className="text-secondary" />
@@ -164,20 +203,42 @@ export default async function MemberProfilePage({
                     {/* Main Content: Story & Relationships */}
                     <div className="md:col-span-2 space-y-12">
                         {/* Life Story */}
-                        <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100">
-                            <h2 className="text-2xl font-serif font-black text-primary mb-6 flex items-center gap-3">
+                        <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-stone-50 rounded-bl-[5rem] -z-0 opacity-50" />
+                            <h2 className="text-2xl font-serif font-black text-primary mb-6 flex items-center gap-3 relative z-10">
                                 <BookOpen size={24} className="text-secondary" />
                                 סיפור חיים
                             </h2>
-                            <div className="prose prose-stone max-w-none">
+                            <div className="prose prose-stone max-w-none relative z-10">
                                 {member.life_story ? (
-                                    <p className="text-stone-600 leading-relaxed font-medium whitespace-pre-wrap text-lg">
-                                        {member.life_story}
-                                    </p>
+                                    <div 
+                                        className="text-stone-600 leading-relaxed font-medium whitespace-pre-wrap text-lg"
+                                        dangerouslySetInnerHTML={{ __html: member.life_story }}
+                                    />
                                 ) : (
                                     <p className="text-stone-400 italic font-bold">טרם הוזן סיפור חיים עבור {member.name}.</p>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Media Gallery / Story Images */}
+                        <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100">
+                            <h2 className="text-2xl font-serif font-black text-primary mb-8 flex items-center gap-3">
+                                <Camera size={24} className="text-secondary" />
+                                גלריית זכרונות
+                            </h2>
+                            {member.story_images && Array.isArray(member.story_images) && member.story_images.length > 0 ? (
+                                <GallerySection 
+                                    images={member.story_images.map((img: any) => typeof img === 'string' ? img : img.url)}
+                                    isAdmin={isAdmin}
+                                    memberId={id}
+                                />
+                            ) : (
+                                <div className="py-12 text-center bg-stone-50 rounded-3xl border-2 border-dashed border-stone-200">
+                                    <Camera size={40} className="mx-auto text-stone-300 mb-4" />
+                                    <p className="text-stone-400 font-bold">אין עדיין תמונות בגלריה</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Relationships */}
@@ -261,28 +322,6 @@ export default async function MemberProfilePage({
                                 </div>
                             )}
                         </div>
-
-                        {/* Media Gallery / Story Images */}
-                        {member.story_images && Array.isArray(member.story_images) && member.story_images.length > 0 && (
-                            <div className="bg-white rounded-[2.5rem] p-10 heritage-shadow border border-stone-100">
-                                <h2 className="text-2xl font-serif font-black text-primary mb-8 flex items-center gap-3">
-                                    <Camera size={24} className="text-secondary" />
-                                    גלריית זכרונות
-                                </h2>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                                    {member.story_images.map((img: any, idx: number) => (
-                                        <div key={idx} className="aspect-square rounded-2xl overflow-hidden bg-stone-100 group cursor-pointer relative">
-                                            <img
-                                                src={typeof img === 'string' ? img : img.url}
-                                                alt={`זכרון ${idx + 1}`}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
