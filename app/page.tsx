@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
-import { Book, Users, Plus, Ghost, Heart, ShieldCheck, User, LogOut, ArrowLeft, Sparkles, History, Camera } from 'lucide-react'
+import { Book, Users, Plus, Ghost, Heart, ShieldCheck, User, LogOut, ArrowLeft, Sparkles, History, Camera, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function HomePage() {
@@ -67,67 +67,6 @@ export default async function HomePage() {
 
     return (
         <main className="min-h-screen bg-[#fdfcfb] selection:bg-primary/10 overflow-x-hidden">
-            {/* Elegant Header */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-stone-200/60">
-                <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20 transform -rotate-3">
-                            <History size={24} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-2xl font-serif font-black tracking-tight text-primary leading-none">שורשים</span>
-                            <span className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mt-1">Family Archive</span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-8">
-                        {user ? (
-                            <div className="flex items-center gap-4 md:gap-8">
-                                <div className="flex items-center gap-4 md:gap-6">
-                                    {isAdmin && (
-                                        <Link
-                                            href="/admin"
-                                            className="text-stone-500 hover:text-primary font-black text-sm transition-colors flex items-center gap-2"
-                                            title="ניהול"
-                                        >
-                                            <ShieldCheck size={18} />
-                                            <span className="hidden md:inline">ניהול</span>
-                                        </Link>
-                                    )}
-                                    <Link
-                                        href="/family"
-                                        className="text-stone-500 hover:text-primary font-black text-sm transition-colors flex items-center gap-2"
-                                        title="ספר המשפחה"
-                                    >
-                                        <Users size={18} className="md:hidden" />
-                                        <span className="hidden md:inline">ספר המשפחה</span>
-                                    </Link>
-                                </div>
-                                <div className="h-8 w-px bg-stone-200 hidden md:block" />
-                                <div className="flex items-center gap-4">
-                                    <div className="text-left hidden sm:block">
-                                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">שלום,</p>
-                                        <p className="text-sm font-bold text-primary">{profileName}</p>
-                                    </div>
-                                    <form action="/api/auth/signout" method="POST">
-                                        <button className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-rose-50 hover:text-rose-600 transition-all border border-transparent hover:border-rose-100">
-                                            <LogOut size={18} />
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="bg-primary text-white px-8 py-3 rounded-2xl font-black hover:shadow-xl hover:shadow-primary/20 transition-all transform hover:-translate-y-0.5"
-                            >
-                                התחברות למערכת
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            </nav>
-
             {/* Hero Section */}
             <section className="relative pt-20 pb-40">
                 {/* Decorative Background Elements */}

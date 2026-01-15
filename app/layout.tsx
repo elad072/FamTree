@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const assistant = Assistant({
     subsets: ["hebrew", "latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
     return (
         <html lang="he" dir="rtl" className={`${assistant.variable} ${frankRuhl.variable}`}>
             <body className="antialiased font-assistant bg-stone-50 text-stone-900">
+                <Navbar />
                 {children}
             </body>
         </html>

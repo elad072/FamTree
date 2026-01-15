@@ -54,17 +54,30 @@ export default function AddMemberPage() {
         email: ''
     })
 
-    // Fetch members for parent/spouse selection
+    // Fetch members for parent/spouse selection and check for existing profile
     useEffect(() => {
-        async function fetchMembers() {
+        async function init() {
+            const { data: { user } } = await supabase.auth.getUser()
+            
             const { data } = await supabase
                 .from('family_members')
-                .select('id, name')
+                .select('id, name, email')
                 .eq('status', 'approved')
                 .order('name')
-            if (data) setMembers(data)
+            if (data) {
+                setMembers(data)
+                
+                // If user is logged in, check if they already have a family member entry
+                if (user?.email) {
+                    const existing = data.find(m => m.email === user.email)
+                    if (existing) {
+                        // We could pre-fill or suggest linking here
+                        console.log('Found existing family member for user:', existing.name)
+                    }
+                }
+            }
         }
-        fetchMembers()
+        init()
     }, [supabase])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import UserManagement from '@/components/UserManagement'
+import AdminMessageManager from '@/components/AdminMessageManager'
 import React from 'react'
 
 export default async function AdminDashboard() {
@@ -46,11 +47,6 @@ export default async function AdminDashboard() {
         .select('*')
         .eq('status', 'pending')
         .order('created_date', { ascending: false })
-
-    // Log for debugging
-    if (membersError) {
-        console.error('Error fetching pending members:', membersError)
-    }
 
     // Fetch pending users (profiles not approved)
     const { data: pendingUsers } = await adminClient
@@ -88,137 +84,114 @@ export default async function AdminDashboard() {
         .order('created_at', { ascending: false })
         .limit(5)
 
+    // Fetch all messages for admin
+    const { data: allMessages, error: messagesError } = await adminClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    // Fetch profiles separately to avoid join issues
+    const { data: messageProfiles } = await adminClient
+        .from('profiles')
+        .select('id, full_name, email')
+
+    const messagesWithProfiles = allMessages?.map(msg => ({
+        ...msg,
+        profiles: messageProfiles?.find(p => p.id === msg.user_id)
+    }))
+
     return (
-        <main className="min-h-screen bg-[#fdfcfb] pb-32">
-            {/* Top Navigation Bar */}
-            <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200/60">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform overflow-hidden">
-                                <img src="/logo.png" alt="Carmel Tree" className="w-full h-full object-cover" />
-                            </div>
-                            <span className="text-2xl font-serif font-black text-primary tracking-tight">Carmel Tree</span>
-                        </Link>
-                        
-                        <div className="hidden md:flex items-center gap-1 text-stone-400 text-sm font-bold">
-                            <ChevronRight size={14} />
-                            <span className="text-primary bg-primary/5 px-3 py-1 rounded-full flex items-center gap-1.5">
-                                <ShieldCheck size={16} />
-                                ניהול מערכת
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="text-left hidden sm:block">
-                            <p className="text-xs font-black text-stone-400 uppercase tracking-wider">מחובר כעת</p>
-                            <p className="text-sm font-bold text-primary">{profile?.full_name || 'מנהל מערכת'}</p>
-                        </div>
-                        <form action="/api/auth/signout" method="POST">
-                            <button className="flex items-center gap-2 bg-stone-100 hover:bg-rose-50 text-stone-600 hover:text-rose-600 px-4 py-2.5 rounded-xl font-bold transition-all border border-transparent hover:border-rose-100">
-                                <LogOut size={18} />
-                                <span className="hidden sm:inline">התנתקות</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </nav>
-
+        <main className="min-h-screen bg-stone-50 pb-32">
             {/* Hero Header */}
-            <div className="relative overflow-hidden bg-white border-b border-stone-200 py-12 md:py-16 mb-8 md:mb-12">
+            <div className="relative overflow-hidden bg-white border-b border-stone-200 pt-16 pb-24 mb-12">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 -skew-x-12 translate-x-1/2" />
                 <div className="max-w-7xl mx-auto px-6 relative">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                        <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                    <LayoutDashboard size={24} />
-                                </div>
-                                <span className="text-primary font-black tracking-widest uppercase text-sm">Admin Control Panel</span>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-primary/10 rounded-2xl text-primary text-sm font-black tracking-widest uppercase">
+                                <ShieldCheck size={20} />
+                                Admin Control Panel
                             </div>
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-black text-primary leading-tight">
-                                לוח בקרה <span className="text-secondary">וניהול</span>
+                            <h1 className="text-5xl md:text-7xl font-serif font-black text-primary leading-tight">
+                                לוח בקרה <br />
+                                <span className="text-stone-300 italic">וניהול המערכת</span>
                             </h1>
-                            <p className="text-stone-500 mt-4 text-base md:text-lg font-medium max-w-2xl">
+                            <p className="text-xl text-stone-500 font-medium max-w-2xl leading-relaxed">
                                 ברוך הבא למרכז השליטה. כאן תוכל לנהל את משתמשי המערכת, לאשר תוכן חדש ולשמור על איכות הארכיון המשפחתי.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-                            <div className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 border border-stone-100 flex flex-col items-center text-center min-w-[120px] md:min-w-[140px]">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 text-primary rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-3">
-                                    <UsersIcon size={20} />
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { label: 'בני משפחה', value: totalMembers, icon: <UsersIcon size={24} />, color: 'text-primary', bg: 'bg-primary/5' },
+                                { label: 'בקשות אישור', value: pendingMembers?.length, icon: <FileText size={24} />, color: 'text-secondary', bg: 'bg-secondary/5' },
+                                { label: 'משתמשים', value: totalUsers, icon: <ShieldCheck size={24} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { label: 'תגובות', value: totalComments, icon: <Clock size={24} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-stone-200/50 border border-stone-100 flex flex-col items-center text-center min-w-[160px]">
+                                    <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 shadow-inner`}>
+                                        {stat.icon}
+                                    </div>
+                                    <span className={`text-4xl font-black ${stat.color}`}>{stat.value || 0}</span>
+                                    <span className="text-xs font-black text-stone-400 uppercase tracking-wider mt-2">{stat.label}</span>
                                 </div>
-                                <span className="text-2xl md:text-3xl font-black text-primary">{totalMembers || 0}</span>
-                                <span className="text-[10px] md:text-xs font-bold text-stone-400 mt-1">בני משפחה</span>
-                            </div>
-                            <div className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 border border-stone-100 flex flex-col items-center text-center min-w-[120px] md:min-w-[140px]">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-secondary/10 text-secondary rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-3">
-                                    <FileText size={20} />
-                                </div>
-                                <span className="text-2xl md:text-3xl font-black text-secondary">{pendingMembers?.length || 0}</span>
-                                <span className="text-[10px] md:text-xs font-bold text-stone-400 mt-1">בקשות אישור</span>
-                            </div>
-                            <div className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 border border-stone-100 flex flex-col items-center text-center min-w-[120px] md:min-w-[140px]">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-3">
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <span className="text-2xl md:text-3xl font-black text-emerald-600">{totalUsers || 0}</span>
-                                <span className="text-[10px] md:text-xs font-bold text-stone-400 mt-1">משתמשים פעילים</span>
-                            </div>
-                            <div className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 border border-stone-100 flex flex-col items-center text-center min-w-[120px] md:min-w-[140px]">
-                                <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-3">
-                                    <Clock size={20} />
-                                </div>
-                                <span className="text-2xl md:text-3xl font-black text-amber-600">{totalComments || 0}</span>
-                                <span className="text-[10px] md:text-xs font-bold text-stone-400 mt-1">תגובות</span>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-12 md:space-y-16">
+            <div className="max-w-7xl mx-auto px-6 space-y-20">
                 {/* Activity & Pending Grid */}
-                <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
-                    <div className="lg:col-span-2 space-y-10 md:space-y-12">
+                <div className="grid lg:grid-cols-12 gap-12">
+                    <div className="lg:col-span-8 space-y-20">
+                        {/* Messages Section */}
+                        <section className="space-y-8">
+                            <div className="flex items-center gap-6">
+                                <h2 className="text-3xl font-serif font-black text-primary">
+                                    פניות והודעות
+                                </h2>
+                                <div className="h-px flex-1 bg-gradient-to-l from-stone-200 to-transparent" />
+                            </div>
+                            <AdminMessageManager initialMessages={messagesWithProfiles || []} />
+                        </section>
+
                         {/* Pending Users Section */}
                         {pendingUsers && pendingUsers.length > 0 && (
-                            <section className="space-y-6 md:space-y-8">
-                                <div className="flex items-center gap-4">
-                                    <h2 className="text-2xl md:text-3xl font-serif font-black text-primary">
+                            <section className="space-y-8">
+                                <div className="flex items-center gap-6">
+                                    <h2 className="text-3xl font-serif font-black text-primary">
                                         משתמשים חדשים
                                     </h2>
                                     <div className="h-px flex-1 bg-gradient-to-l from-stone-200 to-transparent" />
                                 </div>
-                                <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
+                                <div className="grid sm:grid-cols-2 gap-6">
                                     {pendingUsers.map((userProfile: any) => (
-                                        <div key={userProfile.id} className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-stone-200/40 border border-stone-100 hover:border-primary/20 transition-all group">
-                                            <div className="flex items-start justify-between mb-4 md:mb-6">
-                                                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors overflow-hidden">
+                                        <div key={userProfile.id} className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-stone-200/40 border border-stone-100 hover:border-primary/20 transition-all group">
+                                            <div className="flex items-start justify-between mb-6">
+                                                <div className="w-16 h-16 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors overflow-hidden border-2 border-white shadow-inner">
                                                     {userProfile.avatar_url ? (
                                                         <img src={userProfile.avatar_url} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <User size={24} />
+                                                        <User size={28} />
                                                     )}
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <form action={`/api/admin/approve-user?id=${userProfile.id}`} method="POST">
-                                                        <button className="bg-green-500 text-white p-2.5 md:p-3 rounded-lg md:rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-200">
-                                                            <Check size={18} />
+                                                        <button className="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-200">
+                                                            <Check size={20} />
                                                         </button>
                                                     </form>
                                                     <form action={`/api/admin/reject-user?id=${userProfile.id}`} method="POST">
-                                                        <button className="bg-white text-rose-500 border border-rose-100 p-2.5 md:p-3 rounded-lg md:rounded-xl hover:bg-rose-50 transition-all">
-                                                            <X size={18} />
+                                                        <button className="bg-white text-rose-500 border border-rose-100 p-3 rounded-xl hover:bg-rose-50 transition-all">
+                                                            <X size={20} />
                                                         </button>
                                                     </form>
                                                 </div>
                                             </div>
                                             <div>
-                                                <h3 className="font-black text-lg md:text-xl text-primary mb-1">{userProfile.full_name || 'ללא שם'}</h3>
-                                                <p className="text-stone-400 font-bold text-xs md:text-sm truncate">{userProfile.email}</p>
+                                                <h3 className="font-black text-xl text-primary mb-1">{userProfile.full_name || 'ללא שם'}</h3>
+                                                <p className="text-stone-400 font-bold text-sm truncate">{userProfile.email}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -227,56 +200,56 @@ export default async function AdminDashboard() {
                         )}
 
                         {/* Pending Content Section */}
-                        <section className="space-y-6 md:space-y-8">
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-2xl md:text-3xl font-serif font-black text-primary">
+                        <section className="space-y-8">
+                            <div className="flex items-center gap-6">
+                                <h2 className="text-3xl font-serif font-black text-primary">
                                     בקשות לתוכן חדש
                                 </h2>
                                 <div className="h-px flex-1 bg-gradient-to-l from-stone-200 to-transparent" />
                             </div>
                             
                             {!pendingMembers || pendingMembers.length === 0 ? (
-                                <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-10 md:p-16 text-center border border-dashed border-stone-200">
-                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-stone-50 text-stone-200 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
-                                        <Check size={24} />
+                                <div className="bg-white rounded-[3rem] p-20 text-center border border-dashed border-stone-200">
+                                    <div className="w-20 h-20 bg-stone-50 text-stone-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Check size={40} />
                                     </div>
-                                    <h3 className="text-lg md:text-xl font-serif font-black text-stone-400">כל הבקשות טופלו</h3>
+                                    <h3 className="text-2xl font-serif font-black text-stone-400">כל הבקשות טופלו</h3>
                                 </div>
                             ) : (
-                                <div className="grid gap-4 md:gap-6">
+                                <div className="grid gap-6">
                                     {pendingMembers.map((member: any) => (
-                                        <div key={member.id} className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-stone-200/40 border border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-6 hover:shadow-2xl transition-all">
-                                            <div className="flex items-center gap-4 md:gap-6 flex-1 w-full sm:w-auto">
-                                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden bg-stone-100 border-2 md:border-4 border-stone-50 shadow-inner flex-shrink-0">
+                                        <div key={member.id} className="bg-white rounded-[2.5rem] p-6 shadow-xl shadow-stone-200/40 border border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 hover:shadow-2xl transition-all group">
+                                            <div className="flex items-center gap-6 flex-1 w-full sm:w-auto">
+                                                <div className="w-24 h-24 rounded-3xl overflow-hidden bg-stone-100 border-4 border-white shadow-inner flex-shrink-0 group-hover:scale-105 transition-transform">
                                                     {member.image_url ? (
                                                         <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-stone-300">
-                                                            <User size={24} />
+                                                            <User size={32} />
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h3 className="text-lg md:text-xl font-serif font-black text-primary truncate">{member.name}</h3>
-                                                    <p className="text-stone-400 text-[10px] md:text-xs font-bold mt-1 truncate">נוסף על ידי: {member.created_by || 'אנונימי'}</p>
+                                                    <h3 className="text-2xl font-serif font-black text-primary truncate">{member.name}</h3>
+                                                    <p className="text-stone-400 text-xs font-bold mt-1 truncate">נוסף על ידי: {member.created_by || 'אנונימי'}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-2 md:gap-3 w-full sm:w-auto justify-end">
+                                            <div className="flex gap-3 w-full sm:w-auto justify-end">
                                                 <Link
                                                     href={`/family/${member.id}/edit`}
-                                                    className="p-2.5 md:p-3 bg-stone-100 text-stone-600 rounded-lg md:rounded-xl hover:bg-stone-200 transition-all"
+                                                    className="p-4 bg-stone-100 text-stone-600 rounded-2xl hover:bg-stone-200 transition-all"
                                                 >
-                                                    <Edit size={16} />
+                                                    <Edit size={20} />
                                                 </Link>
                                                 <form action={`/api/admin/approve?id=${member.id}`} method="POST">
-                                                    <button className="p-2.5 md:p-3 bg-green-500 text-white rounded-lg md:rounded-xl shadow-lg shadow-green-200 hover:bg-green-600 transition-all">
-                                                        <Check size={16} />
+                                                    <button className="p-4 bg-green-500 text-white rounded-2xl shadow-lg shadow-green-200 hover:bg-green-600 transition-all">
+                                                        <Check size={20} />
                                                     </button>
                                                 </form>
                                                 <form action={`/api/admin/reject?id=${member.id}`} method="POST">
-                                                    <button className="p-2.5 md:p-3 bg-white text-rose-500 border border-rose-100 rounded-lg md:rounded-xl hover:bg-rose-50 transition-all">
-                                                        <X size={16} />
+                                                    <button className="p-4 bg-white text-rose-500 border border-rose-100 rounded-2xl hover:bg-rose-50 transition-all">
+                                                        <X size={20} />
                                                     </button>
                                                 </form>
                                             </div>
@@ -288,26 +261,26 @@ export default async function AdminDashboard() {
                     </div>
 
                     {/* Sidebar: Recent Activity */}
-                    <div className="space-y-6 md:space-y-8">
+                    <div className="lg:col-span-4 space-y-12">
                         <div className="flex items-center gap-4">
-                            <h2 className="text-xl md:text-2xl font-serif font-black text-primary">
+                            <h2 className="text-2xl font-serif font-black text-primary">
                                 פעילות אחרונה
                             </h2>
                             <div className="h-px flex-1 bg-gradient-to-l from-stone-200 to-transparent" />
                         </div>
 
-                        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-stone-200/40 border border-stone-100 space-y-6 md:space-y-8">
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-stone-200/40 border border-stone-100 space-y-8">
                             {recentComments && recentComments.length > 0 ? (
                                 recentComments.map((comment: any) => (
-                                    <div key={comment.id} className="relative pr-6">
-                                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary/10 rounded-full" />
+                                    <div key={comment.id} className="relative pr-6 group">
+                                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary/10 rounded-full group-hover:bg-primary transition-colors" />
                                         <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider mb-1">
                                             {new Date(comment.created_at).toLocaleDateString('he-IL')}
                                         </p>
-                                        <p className="text-xs md:text-sm font-bold text-primary">
+                                        <p className="text-sm font-bold text-primary">
                                             {comment.profiles?.full_name || 'משתמש'} הגיב על {comment.family_members?.name}
                                         </p>
-                                        <p className="text-stone-500 text-xs md:text-sm mt-2 line-clamp-2 italic">
+                                        <p className="text-stone-500 text-sm mt-2 line-clamp-3 italic leading-relaxed">
                                             "{comment.content}"
                                         </p>
                                     </div>
@@ -320,18 +293,20 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* All Users Management */}
-                <section className="space-y-6 md:space-y-8">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-2xl md:text-3xl font-serif font-black text-primary">
+                <section className="space-y-8">
+                    <div className="flex items-center gap-6">
+                        <h2 className="text-3xl font-serif font-black text-primary">
                             ניהול משתמשים
                         </h2>
                         <div className="h-px flex-1 bg-gradient-to-l from-stone-200 to-transparent" />
                     </div>
                     
-                    <UserManagement 
-                        initialUsers={allUsers || []} 
-                        currentAdminId={user.id} 
-                    />
+                    <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-stone-200/40 border border-stone-100">
+                        <UserManagement 
+                            initialUsers={allUsers || []} 
+                            currentAdminId={user.id} 
+                        />
+                    </div>
                 </section>
             </div>
         </main>

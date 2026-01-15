@@ -25,7 +25,7 @@ export default function EditMemberPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [members, setMembers] = useState<any[]>([])
-    const [isAdmin, setIsAdmin] = useState(false)
+    const [canEdit, setCanEdit] = useState(false)
 
     const [formData, setFormData] = useState({
         name: '',
@@ -52,7 +52,7 @@ export default function EditMemberPage() {
         email: ''
     })
 
-    // Check admin and fetch member data
+    // Check permissions and fetch member data
     useEffect(() => {
         async function init() {
             const { data: { user } } = await supabase.auth.getUser()
@@ -67,12 +67,7 @@ export default function EditMemberPage() {
                 .eq('id', user.id)
                 .single()
 
-            if (profile?.role !== 'admin') {
-                router.push('/')
-                return
-            }
-
-            setIsAdmin(true)
+            const isAdmin = profile?.role === 'admin'
 
             // Fetch member data
             const { data: member } = await supabase
@@ -80,6 +75,20 @@ export default function EditMemberPage() {
                 .select('*')
                 .eq('id', id)
                 .single()
+
+            if (!member) {
+                router.push('/family')
+                return
+            }
+
+            // Check if user is admin OR the creator of this member
+            const isCreator = member.created_by_id === user.id
+            if (!isAdmin && !isCreator) {
+                router.push('/')
+                return
+            }
+
+            setCanEdit(true)
 
             if (member) {
                 setFormData({
@@ -185,7 +194,7 @@ export default function EditMemberPage() {
         }
     }
 
-    if (!isAdmin) return null
+    if (!canEdit) return null
 
     return (
         <main className="min-h-screen bg-stone-50 pb-20">
