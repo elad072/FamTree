@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, MapPin, ChevronLeft, User, Heart, Users, Edit, Trash2, SortAsc, Filter } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface FamilyMember {
     id: string
@@ -22,11 +23,14 @@ export default function FamilyGrid({ members, canEdit = false }: { members: Fami
     const [sortBy, setSortBy] = useState<'name' | 'birth_year' | 'newest'>('name')
 
     const filteredMembers = useMemo(() => {
+        if (!members) return []
+        
         let result = members.filter(member => {
+            const query = searchQuery.toLowerCase()
             const matchesSearch =
-                member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (member.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-                (member.birth_place?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+                member.name.toLowerCase().includes(query) ||
+                (member.nickname?.toLowerCase().includes(query) ?? false) ||
+                (member.birth_place?.toLowerCase().includes(query) ?? false)
 
             const matchesFilter =
                 activeFilter === 'all' ||
@@ -115,9 +119,16 @@ export default function FamilyGrid({ members, canEdit = false }: { members: Fami
                         >
                             <div className="flex flex-col items-center text-center">
                                 <div className="relative mb-6">
-                                    <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden bg-stone-100 border-4 border-white heritage-shadow group-hover:scale-105 transition-transform duration-500">
+                                    <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden bg-stone-100 border-4 border-white heritage-shadow group-hover:scale-105 transition-transform duration-500 relative">
                                         {member.image_url ? (
-                                            <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                            <Image 
+                                                src={member.image_url} 
+                                                alt={member.name} 
+                                                fill
+                                                sizes="128px"
+                                                className="object-cover"
+                                                priority={false}
+                                            />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-stone-300">
                                                 <User size={48} />

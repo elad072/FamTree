@@ -23,6 +23,8 @@ import UserManagement from '@/components/UserManagement'
 import AdminMessageManager from '@/components/AdminMessageManager'
 import React from 'react'
 
+export const revalidate = 0 // Admin page should always be fresh
+
 export default async function AdminDashboard() {
     const supabase = await createClient()
     const adminClient = createAdminClient()

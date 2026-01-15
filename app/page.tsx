@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase-server'
 import { Book, Users, Plus, Ghost, Heart, ShieldCheck, User, LogOut, ArrowLeft, Sparkles, History, Camera, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
 
+export const revalidate = 3600
+
 export default async function HomePage() {
     const supabase = await createClient()
 

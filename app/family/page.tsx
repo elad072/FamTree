@@ -3,7 +3,7 @@ import FamilyGrid from '@/components/FamilyGrid'
 import Link from 'next/link'
 import { ChevronLeft, Home, Plus, Users, Search } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // Revalidate every hour
 
 export default async function FamilyPage() {
     const supabase = await createClient()
