@@ -19,6 +19,7 @@ import Link from 'next/link'
 import RichTextEditor from '@/components/RichTextEditor'
 import SearchableSelect from '@/components/SearchableSelect'
 import GalleryUpload from '@/components/GalleryUpload'
+import Button from '@/components/Button'
 
 export default function AddMemberPage() {
     const supabase = createClient()
@@ -354,14 +355,14 @@ export default function AddMemberPage() {
                                 </div>
                             </div>
 
-                            <button
+                            <Button
                                 onClick={nextStep}
                                 disabled={!formData.name}
-                                className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="w-full py-5 rounded-2xl shadow-xl"
                             >
                                 המשך לשלב הבא
-                                <ChevronLeft size={20} />
-                            </button>
+                                <ChevronLeft size={20} className="mr-2" />
+                            </Button>
                         </div>
                     )}
 
@@ -455,14 +456,21 @@ export default function AddMemberPage() {
                             </div>
 
                             <div className="flex gap-4 pt-4">
-                                <button onClick={prevStep} className="flex-1 bg-stone-100 text-stone-600 py-5 rounded-2xl font-black hover:bg-stone-200 transition-all flex items-center justify-center gap-2">
-                                    <ChevronRight size={20} />
+                                <Button
+                                    variant="outline"
+                                    onClick={prevStep}
+                                    className="flex-1 py-5 rounded-2xl"
+                                >
+                                    <ChevronRight size={20} className="ml-2" />
                                     חזרה
-                                </button>
-                                <button onClick={nextStep} className="flex-[2] bg-primary text-primary-foreground py-5 rounded-2xl font-black shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2">
+                                </Button>
+                                <Button
+                                    onClick={nextStep}
+                                    className="flex-[2] py-5 rounded-2xl shadow-xl"
+                                >
                                     המשך לשלב הבא
-                                    <ChevronLeft size={20} />
-                                </button>
+                                    <ChevronLeft size={20} className="mr-2" />
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -510,18 +518,22 @@ export default function AddMemberPage() {
                             )}
 
                             <div className="flex gap-4 pt-4">
-                                <button onClick={prevStep} className="flex-1 bg-stone-100 text-stone-600 py-5 rounded-2xl font-black hover:bg-stone-200 transition-all flex items-center justify-center gap-2">
-                                    <ChevronRight size={20} />
+                                <Button
+                                    variant="outline"
+                                    onClick={prevStep}
+                                    className="flex-1 py-5 rounded-2xl"
+                                >
+                                    <ChevronRight size={20} className="ml-2" />
                                     חזרה
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={handleSubmit}
-                                    disabled={loading}
-                                    className="flex-[2] bg-primary text-primary-foreground py-5 rounded-2xl font-black shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    isLoading={loading}
+                                    className="flex-[2] py-5 rounded-2xl shadow-xl"
                                 >
                                     {loading ? 'שומר נתונים...' : 'שליחה לאישור המערכת'}
-                                    <CheckCircle2 size={20} />
-                                </button>
+                                    {!loading && <CheckCircle2 size={20} className="mr-2" />}
+                                </Button>
                             </div>
                         </div>
                     )}
